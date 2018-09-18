@@ -174,6 +174,11 @@ class HtmlView extends BaseHtmlView
 
 		if ($canDo->get('core.edit.state'))
 		{
+
+			$toolbar->publish('articles.publish');
+
+			$toolbar->unpublish('articles.unpublish');
+
 			$toolbar->standardButton('featured')
 				->text('JFEATURE')
 				->task('articles.featured')
@@ -183,6 +188,8 @@ class HtmlView extends BaseHtmlView
 				->text('JUNFEATURE')
 				->task('articles.unfeatured')
 				->listCheck(true);
+
+			$toolbar->archive('articles.archive');
 
 			$toolbar->checkin('articles.checkin')->listCheck(true);
 		}
@@ -207,7 +214,7 @@ class HtmlView extends BaseHtmlView
 		}
 		elseif ($canDo->get('core.edit.state'))
 		{
-			$toolbar->trash('articles.trash')->listCheck(true);
+			$toolbar->trash('articles.trash');
 		}
 
 		if ($user->authorise('core.admin', 'com_content') || $user->authorise('core.options', 'com_content'))
