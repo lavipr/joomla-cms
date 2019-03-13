@@ -6,7 +6,6 @@
 		filtermode="selector"
 		onchange="Joomla.resetFilters(this)"
 		>
-		<option value="">COM_ASSOCIATIONS_FILTER_SELECT_ITEM_TYPE</option>
 	</field>
 
 	<field
@@ -16,7 +15,6 @@
 		filtermode="selector"
 		onchange="this.form.submit();"
 		>
-		<option value="">JOPTION_SELECT_LANGUAGE</option>
 	</field>
 
 	<fields name="filter">

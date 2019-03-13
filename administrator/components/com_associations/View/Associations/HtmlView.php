@@ -77,6 +77,15 @@ class HtmlView extends BaseHtmlView
 		$this->filterForm    = $this->get('FilterForm');
 		$this->activeFilters = $this->get('ActiveFilters');
 
+		//get default values and set these to selected to the select boxes
+		if($this->state->get('itemtype')){
+			$this->filterForm->setValue('itemtype', null, $this->state->get('itemtype'));
+		}
+		if($this->state->get('language')){
+			$this->filterForm->setValue('language', null, $this->state->get('language'));
+		}
+
+
 		if (!Associations::isEnabled())
 		{
 			$link = Route::_('index.php?option=com_plugins&task=plugin.edit&extension_id=' . AssociationsHelper::getLanguagefilterPluginId());
@@ -231,13 +240,9 @@ class HtmlView extends BaseHtmlView
 
 		if ($user->authorise('core.admin', 'com_associations') || $user->authorise('core.options', 'com_associations'))
 		{
-			if (!isset($this->typeName))
-			{
 				ToolbarHelper::custom('associations.purge', 'purge', 'purge', 'COM_ASSOCIATIONS_PURGE', false, false);
 				ToolbarHelper::custom('associations.clean', 'refresh', 'refresh', 'COM_ASSOCIATIONS_DELETE_ORPHANS', false, false);
-			}
-
-			ToolbarHelper::preferences('com_associations');
+				ToolbarHelper::preferences('com_associations');
 		}
 
 		ToolbarHelper::help('JHELP_COMPONENTS_ASSOCIATIONS');

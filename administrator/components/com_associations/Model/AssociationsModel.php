@@ -79,6 +79,9 @@ class AssociationsModel extends ListModel
 		$forcedLanguage = $app->input->get('forcedLanguage', '', 'cmd');
 		$forcedItemType = $app->input->get('forcedItemType', '', 'string');
 
+		$defaultLanguage = $app->getLanguage()->getTag();
+		$defaultItemType = 'com_content.article';
+
 		// Adjust the context to support modal layouts.
 		if ($layout = $app->input->get('layout'))
 		{
@@ -97,8 +100,8 @@ class AssociationsModel extends ListModel
 			$this->context .= '.' . $forcedItemType;
 		}
 
-		$this->setState('itemtype', $this->getUserStateFromRequest($this->context . '.itemtype', 'itemtype', '', 'string'));
-		$this->setState('language', $this->getUserStateFromRequest($this->context . '.language', 'language', '', 'string'));
+		$this->setState('itemtype', $this->getUserStateFromRequest($this->context . '.itemtype', 'itemtype', $defaultItemType, 'string'));
+		$this->setState('language', $this->getUserStateFromRequest($this->context . '.language', 'language', $defaultLanguage, 'string'));
 
 		$this->setState('filter.search', $this->getUserStateFromRequest($this->context . '.filter.search', 'filter_search', '', 'string'));
 		$this->setState('filter.state', $this->getUserStateFromRequest($this->context . '.filter.state', 'filter_state', '', 'cmd'));
@@ -463,7 +466,25 @@ class AssociationsModel extends ListModel
 		// Filter by associations context.
 		if ($context)
 		{
-			$query->where($db->quoteName('context') . ' = ' . $db->quote($context));
+			list($extensionName, $typeName) = explode('.', $context, 2);
+
+			// If component item type is category we need to remove all other component categories.
+			if ($typeName === 'category')
+			{
+				// Subquery: Search for category-items with the given context
+				$subQuery = $db->getQuery(true)
+				->select('id')
+					->from("#__categories")
+					->where("extension = " . $db->quote($extensionName));
+
+				// delete associations of categories with the given context by comparing id of both tables
+				$query->where($db->quoteName('id') . " IN (" . $subQuery . ")")
+					->where("context = 'com_categories.item'");
+
+			} else
+			{
+				$query->where($db->quoteName('context') . ' = ' . $db->quote($extensionName . '.' . 'item'));
+			}
 		}
 
 		// Filter by key.
