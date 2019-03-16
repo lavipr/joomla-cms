@@ -49,7 +49,7 @@ class AssociationsController extends AdminController
 	}
 
 	/**
-	 * Method to purge the associations table by context.
+	 * Method to delete associations from the associations table by selected ids.
 	 *
 	 * @return  void
 	 *
@@ -57,7 +57,24 @@ class AssociationsController extends AdminController
 	 */
 	public function purge()
 	{
+		$itemID = $this->input->getString('cid');
 		$context = $this->input->getString('itemtype');
+
+		$this->getModel('associations')->purge($context, $itemID);
+		$this->setRedirect(Route::_('index.php?option=' . $this->option . '&view=' . $this->view_list, false));
+	}
+
+	/**
+	 * Method to purge the associations table by context.
+	 *
+	 * @return  void
+	 *
+	 * @since  3.7.0
+	 */
+	public function purgeAll()
+	{
+		$context = $this->input->getString('itemtype');
+
 		$this->getModel('associations')->purge($context);
 		$this->setRedirect(Route::_('index.php?option=' . $this->option . '&view=' . $this->view_list, false));
 	}

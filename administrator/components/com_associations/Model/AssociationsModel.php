@@ -29,8 +29,8 @@ class AssociationsModel extends ListModel
 	/**
 	 * Override parent constructor.
 	 *
-	 * @param   array                $config   An optional associative array of configuration settings.
-	 * @param   MVCFactoryInterface  $factory  The factory.
+	 * @param   array               $config  An optional associative array of configuration settings.
+	 * @param   MVCFactoryInterface $factory The factory.
 	 *
 	 * @see     \Joomla\CMS\MVC\Model\BaseDatabaseModel
 	 * @since   3.7
@@ -65,8 +65,8 @@ class AssociationsModel extends ListModel
 	 *
 	 * Note. Calling getState in this method will result in recursion.
 	 *
-	 * @param   string  $ordering   An optional ordering field.
-	 * @param   string  $direction  An optional direction (asc|desc).
+	 * @param   string $ordering  An optional ordering field.
+	 * @param   string $direction An optional direction (asc|desc).
 	 *
 	 * @return  void
 	 *
@@ -100,15 +100,23 @@ class AssociationsModel extends ListModel
 			$this->context .= '.' . $forcedItemType;
 		}
 
-		$this->setState('itemtype', $this->getUserStateFromRequest($this->context . '.itemtype', 'itemtype', $defaultItemType, 'string'));
-		$this->setState('language', $this->getUserStateFromRequest($this->context . '.language', 'language', $defaultLanguage, 'string'));
+		$this->setState('itemtype',
+			$this->getUserStateFromRequest($this->context . '.itemtype', 'itemtype', $defaultItemType, 'string'));
+		$this->setState('language',
+			$this->getUserStateFromRequest($this->context . '.language', 'language', $defaultLanguage, 'string'));
 
-		$this->setState('filter.search', $this->getUserStateFromRequest($this->context . '.filter.search', 'filter_search', '', 'string'));
-		$this->setState('filter.state', $this->getUserStateFromRequest($this->context . '.filter.state', 'filter_state', '', 'cmd'));
-		$this->setState('filter.category_id', $this->getUserStateFromRequest($this->context . '.filter.category_id', 'filter_category_id', '', 'cmd'));
-		$this->setState('filter.menutype', $this->getUserStateFromRequest($this->context . '.filter.menutype', 'filter_menutype', '', 'string'));
-		$this->setState('filter.access', $this->getUserStateFromRequest($this->context . '.filter.access', 'filter_access', '', 'string'));
-		$this->setState('filter.level', $this->getUserStateFromRequest($this->context . '.filter.level', 'filter_level', '', 'cmd'));
+		$this->setState('filter.search',
+			$this->getUserStateFromRequest($this->context . '.filter.search', 'filter_search', '', 'string'));
+		$this->setState('filter.state',
+			$this->getUserStateFromRequest($this->context . '.filter.state', 'filter_state', '', 'cmd'));
+		$this->setState('filter.category_id',
+			$this->getUserStateFromRequest($this->context . '.filter.category_id', 'filter_category_id', '', 'cmd'));
+		$this->setState('filter.menutype',
+			$this->getUserStateFromRequest($this->context . '.filter.menutype', 'filter_menutype', '', 'string'));
+		$this->setState('filter.access',
+			$this->getUserStateFromRequest($this->context . '.filter.access', 'filter_access', '', 'string'));
+		$this->setState('filter.level',
+			$this->getUserStateFromRequest($this->context . '.filter.level', 'filter_level', '', 'cmd'));
 
 		// List state information.
 		parent::populateState($ordering, $direction);
@@ -133,7 +141,7 @@ class AssociationsModel extends ListModel
 	 * different modules that might need different sets of data or different
 	 * ordering requirements.
 	 *
-	 * @param   string  $id  A prefix for the store id.
+	 * @param   string $id A prefix for the store id.
 	 *
 	 * @return  string  A store id.
 	 *
@@ -163,7 +171,7 @@ class AssociationsModel extends ListModel
 	 */
 	protected function getListQuery()
 	{
-		$type         = null;
+		$type = null;
 
 		list($extensionName, $typeName) = explode('.', $this->state->get('itemtype'), 2);
 
@@ -181,9 +189,9 @@ class AssociationsModel extends ListModel
 		}
 
 		// Create a new query object.
-		$user     = Factory::getUser();
-		$db       = $this->getDbo();
-		$query    = $db->getQuery(true);
+		$user  = Factory::getUser();
+		$db    = $this->getDbo();
+		$query = $db->getQuery(true);
 
 		$details = $type->get('details');
 
@@ -234,16 +242,19 @@ class AssociationsModel extends ListModel
 		$query->select($db->quoteName($fields['language'], 'language'))
 			->select($db->quoteName('l.title', 'language_title'))
 			->select($db->quoteName('l.image', 'language_image'))
-			->join('LEFT', $db->quoteName('#__languages', 'l') . ' ON ' . $db->quoteName('l.lang_code') . ' = ' . $db->quoteName($fields['language']));
+			->join('LEFT', $db->quoteName('#__languages', 'l') . ' ON ' . $db->quoteName('l.lang_code') . ' = '
+				. $db->quoteName($fields['language']));
 
 		// Join over the associations.
 		$query->select('COUNT(' . $db->quoteName('asso2.id') . ') > 1 AS ' . $db->quoteName('association'))
 			->join(
 				'LEFT',
-				$db->quoteName('#__associations', 'asso') . ' ON ' . $db->quoteName('asso.id') . ' = ' . $db->quoteName($fields['id'])
+				$db->quoteName('#__associations', 'asso') . ' ON ' . $db->quoteName('asso.id') . ' = '
+				. $db->quoteName($fields['id'])
 				. ' AND ' . $db->quoteName('asso.context') . ' = ' . $db->quote($extensionName . '.' . 'item')
 			)
-			->join('LEFT', $db->quoteName('#__associations', 'asso2') . ' ON ' . $db->quoteName('asso2.key') . ' = ' . $db->quoteName('asso.key'));
+			->join('LEFT', $db->quoteName('#__associations', 'asso2') . ' ON ' . $db->quoteName('asso2.key') . ' = '
+				. $db->quoteName('asso.key'));
 
 		// Prepare the group by clause.
 		$groupby = array(
@@ -271,7 +282,8 @@ class AssociationsModel extends ListModel
 
 			// Join over the users.
 			$query->select($db->quoteName('u.name', 'editor'))
-				->join('LEFT', $db->quoteName('#__users', 'u') . ' ON ' . $db->quoteName('u.id') . ' = ' . $db->quoteName($fields['checked_out']));
+				->join('LEFT', $db->quoteName('#__users', 'u') . ' ON ' . $db->quoteName('u.id') . ' = '
+					. $db->quoteName($fields['checked_out']));
 
 			$groupby[] = 'u.name';
 			$groupby[] = $fields['checked_out'];
@@ -309,7 +321,8 @@ class AssociationsModel extends ListModel
 
 			// Join over the categories.
 			$query->select($db->quoteName('c.title', 'category_title'))
-				->join('LEFT', $db->quoteName('#__categories', 'c') . ' ON ' . $db->quoteName('c.id') . ' = ' . $db->quoteName($fields['catid']));
+				->join('LEFT', $db->quoteName('#__categories', 'c') . ' ON ' . $db->quoteName('c.id') . ' = '
+					. $db->quoteName($fields['catid']));
 
 			$groupby[] = 'c.title';
 			$groupby[] = $fields['catid'];
@@ -323,7 +336,8 @@ class AssociationsModel extends ListModel
 			// Join over the menu types.
 			$query->select($db->quoteName('mt.title', 'menutype_title'))
 				->select($db->quoteName('mt.id', 'menutypeid'))
-				->join('LEFT', $db->quoteName('#__menu_types', 'mt') . ' ON ' . $db->quoteName('mt.menutype') . ' = ' . $db->quoteName($fields['menutype']));
+				->join('LEFT', $db->quoteName('#__menu_types', 'mt') . ' ON ' . $db->quoteName('mt.menutype') . ' = '
+					. $db->quoteName($fields['menutype']));
 
 			$groupby[] = 'mt.title';
 			$groupby[] = 'mt.id';
@@ -337,7 +351,8 @@ class AssociationsModel extends ListModel
 
 			// Join over the access levels.
 			$query->select($db->quoteName('ag.title', 'access_level'))
-				->join('LEFT', $db->quoteName('#__viewlevels', 'ag') . ' ON ' . $db->quoteName('ag.id') . ' = ' . $db->quoteName($fields['access']));
+				->join('LEFT', $db->quoteName('#__viewlevels', 'ag') . ' ON ' . $db->quoteName('ag.id') . ' = '
+					. $db->quoteName($fields['access']));
 
 			$groupby[] = 'ag.title';
 			$groupby[] = $fields['access'];
@@ -360,8 +375,7 @@ class AssociationsModel extends ListModel
 		if ($typeName === 'category')
 		{
 			$query->where($db->quoteName('a.extension') . ' = ' . $db->quote($extensionName));
-		}
-		elseif ($typeNameExploded = explode('.', $typeName))
+		} elseif ($typeNameExploded = explode('.', $typeName))
 		{
 			if (count($typeNameExploded) > 1 && array_pop($typeNameExploded) === 'category')
 			{
@@ -381,9 +395,8 @@ class AssociationsModel extends ListModel
 
 		if (is_numeric($state))
 		{
-			$query->where($db->quoteName($fields['state']) . ' = ' . (int) $state);
-		}
-		elseif ($state === '')
+			$query->where($db->quoteName($fields['state']) . ' = ' . (int)$state);
+		} elseif ($state === '')
 		{
 			$query->where($db->quoteName($fields['state']) . ' IN (0, 1)');
 		}
@@ -395,16 +408,16 @@ class AssociationsModel extends ListModel
 		{
 			$categoryTable = Table::getInstance('Category', 'JTable');
 			$categoryTable->load($categoryId);
-			$baselevel = (int) $categoryTable->level;
+			$baselevel = (int)$categoryTable->level;
 
-			$query->where($db->quoteName('c.lft') . ' >= ' . (int) $categoryTable->lft)
-				->where($db->quoteName('c.rgt') . ' <= ' . (int) $categoryTable->rgt);
+			$query->where($db->quoteName('c.lft') . ' >= ' . (int)$categoryTable->lft)
+				->where($db->quoteName('c.rgt') . ' <= ' . (int)$categoryTable->rgt);
 		}
 
 		// Filter on the level.
 		if ($level = $this->getState('filter.level'))
 		{
-			$query->where($db->quoteName('a.level') . ' <= ' . ((int) $level + (int) $baselevel - 1));
+			$query->where($db->quoteName('a.level') . ' <= ' . ((int)$level + (int)$baselevel - 1));
 		}
 
 		// Filter by menu type.
@@ -416,7 +429,7 @@ class AssociationsModel extends ListModel
 		// Filter by access level.
 		if ($access = $this->getState('filter.access'))
 		{
-			$query->where($fields['access'] . ' = ' . (int) $access);
+			$query->where($fields['access'] . ' = ' . (int)$access);
 		}
 
 		// Filter by search in name.
@@ -424,9 +437,8 @@ class AssociationsModel extends ListModel
 		{
 			if (stripos($search, 'id:') === 0)
 			{
-				$query->where($db->quoteName($fields['id']) . ' = ' . (int) substr($search, 3));
-			}
-			else
+				$query->where($db->quoteName($fields['id']) . ' = ' . (int)substr($search, 3));
+			} else
 			{
 				$search = $db->quote('%' . str_replace(' ', '%', $db->escape(trim($search), true) . '%'));
 				$query->where('(' . $db->quoteName($fields['title']) . ' LIKE ' . $search
@@ -439,8 +451,8 @@ class AssociationsModel extends ListModel
 		$query->group($db->quoteName($groupby));
 
 		// Add the list ordering clause
-		$listOrdering  = $this->state->get('list.ordering', 'id');
-		$orderDirn     = $this->state->get('list.direction', 'ASC');
+		$listOrdering = $this->state->get('list.ordering', 'id');
+		$orderDirn    = $this->state->get('list.direction', 'ASC');
 
 		$query->order($db->escape($listOrdering) . ' ' . $db->escape($orderDirn));
 
@@ -450,14 +462,14 @@ class AssociationsModel extends ListModel
 	/**
 	 * Delete associations from #__associations table.
 	 *
-	 * @param   string  $context  The associations context. Empty for all.
-	 * @param   string  $key      The associations key. Empty for all.
+	 * @param   string $context The associations context. Empty for all.
+	 * @param   string $itemID     The selected item. Empty for all.
 	 *
 	 * @return  boolean  True on success.
 	 *
 	 * @since  3.7.0
 	 */
-	public function purge($context = '', $key = '')
+	public function purge($context = '', $itemID = '')
 	{
 		$app   = Factory::getApplication();
 		$db    = $this->getDbo();
@@ -468,29 +480,65 @@ class AssociationsModel extends ListModel
 		{
 			list($extensionName, $typeName) = explode('.', $context, 2);
 
-			// If component item type is category we need to remove all other component categories.
-			if ($typeName === 'category')
+			if ($itemID)
 			{
-				// Subquery: Search for category-items with the given context
-				$subQuery = $db->getQuery(true)
-				->select('id')
-					->from("#__categories")
-					->where("extension = " . $db->quote($extensionName));
-
-				// delete associations of categories with the given context by comparing id of both tables
-				$query->where($db->quoteName('id') . " IN (" . $subQuery . ")")
-					->where("context = 'com_categories.item'");
-
+				if ($typeName === 'category')
+				{
+					$contextQuery = " AND " . $db->quoteName('context') . ' = ' . $db->quote('com_categories.item');
+				} else
+				{
+					$contextQuery = " AND " . $db->quoteName('context') . ' = ' . $db->quote($extensionName . '.' . 'item');
+				}
 			} else
 			{
-				$query->where($db->quoteName('context') . ' = ' . $db->quote($extensionName . '.' . 'item'));
+				// If component item type is category we need to remove all other component categories.
+				if ($typeName === 'category')
+				{
+					// Subquery: Search for category-items with the given context
+					$subQuery = $db->getQuery(true)
+						->select('id')
+						->from("#__categories")
+						->where("extension = " . $db->quote($extensionName));
+
+					// delete associations of categories with the given context by comparing id of both tables
+					$query->where($db->quoteName('id') . " IN (" . $subQuery
+						. ")")
+						->where("context = 'com_categories.item'");
+				} else
+				{
+					$query->where($db->quoteName('context') . ' = '
+						. $db->quote($extensionName . '.' . 'item'));
+				}
 			}
 		}
 
-		// Filter by key.
-		if ($key)
+		// filter by key, but before by id and context to find the correct key
+		if ($itemID)
 		{
-			$query->where($db->quoteName('key') . ' = ' . $db->quote($key));
+			$firstLoop  = true;
+			$subqueries = '';
+			foreach ($itemID as $value)
+			{
+				$subQuery = $db->getQuery(true)
+					->select($db->quoteName('key'))
+					->from($db->quoteName('#__associations'))
+					->where($db->quoteName('id') . ' = ' . $db->quote($value));
+
+				if ($firstLoop)
+				{
+					$subqueries = $db->quoteName('key') .
+						" = (SELECT " . $db->quoteName('key') . " FROM ("
+						. $subQuery . $contextQuery . ") AS a ) ";
+					$firstLoop  = false;
+				} else
+				{
+					$subqueries = $subqueries . " OR " .
+						$db->quoteName('key') .
+						" = ( SELECT " . $db->quoteName('key') . " FROM ("
+						. $subQuery . $contextQuery . ") AS a ) ";
+				}
+			}
+			$query->where($subqueries);
 		}
 
 		$db->setQuery($query);
@@ -517,8 +565,8 @@ class AssociationsModel extends ListModel
 	/**
 	 * Delete orphans from the #__associations table.
 	 *
-	 * @param   string  $context  The associations context. Empty for all.
-	 * @param   string  $key      The associations key. Empty for all.
+	 * @param   string $context The associations context. Empty for all.
+	 * @param   string $key     The associations key. Empty for all.
 	 *
 	 * @return  boolean  True on success
 	 *
@@ -564,15 +612,14 @@ class AssociationsModel extends ListModel
 			try
 			{
 				$db->execute();
-			}
-			catch (ExecutionFailureException $e)
+			} catch (ExecutionFailureException $e)
 			{
 				$app->enqueueMessage(Text::_('COM_ASSOCIATIONS_DELETE_ORPHANS_FAILED'), 'error');
 
 				return false;
 			}
 
-			$count += (int) $db->getAffectedRows();
+			$count += (int)$db->getAffectedRows();
 		}
 
 		$app->enqueueMessage(

@@ -4,7 +4,7 @@
 		name="itemtype"
 		type="itemtype"
 		filtermode="selector"
-		onchange="Joomla.resetFilters(this)"
+		onchange="this.form.submit()"
 		>
 	</field>
 

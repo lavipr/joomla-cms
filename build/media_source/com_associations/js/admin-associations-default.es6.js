@@ -3,14 +3,24 @@
  * @license     GNU General Public License version 2 or later; see LICENSE.txt
  */
 Joomla.submitbutton = (pressbutton) => {
-  if (pressbutton === 'associations.purge') {
+  if (pressbutton === 'associations.purgeAll') {
+    // eslint-disable-next-line no-restricted-globals
+    if (confirm(Joomla.JText._('COM_ASSOCIATIONS_PURGE_ALL_CONFIRM_PROMPT'))) {
+      Joomla.submitform(pressbutton);
+    } else {
+      return false;
+    }
+  }
+  else if (pressbutton === 'associations.purge') {
     // eslint-disable-next-line no-restricted-globals
     if (confirm(Joomla.JText._('COM_ASSOCIATIONS_PURGE_CONFIRM_PROMPT'))) {
       Joomla.submitform(pressbutton);
     } else {
       return false;
     }
-  } else {
+  }
+    else
+   {
     Joomla.submitform(pressbutton);
   }
 

@@ -29,6 +29,7 @@ $iconStates = array(
 	2  => 'icon-archive',
 );
 
+Text::script('COM_ASSOCIATIONS_PURGE_ALL_CONFIRM_PROMPT', true);
 Text::script('COM_ASSOCIATIONS_PURGE_CONFIRM_PROMPT', true);
 HTMLHelper::_('script', 'com_associations/admin-associations-default.min.js', ['version' => 'auto', 'relative' => true]);
 ?>
@@ -48,6 +49,9 @@ HTMLHelper::_('script', 'com_associations/admin-associations-default.min.js', ['
 						</caption>
 						<thead>
 							<tr>
+								<td style="width:1%" class="text-center">
+									<?php echo HTMLHelper::_('grid.checkall'); ?>
+								</td>
 								<?php if (!empty($this->typeSupports['state'])) : ?>
 									<th scope="col" style="width:1%" class="text-center">
 										<?php echo HTMLHelper::_('searchtools.sort', 'JSTATUS', 'state', $listDirn, $listOrder); ?>
@@ -86,8 +90,12 @@ HTMLHelper::_('script', 'com_associations/admin-associations-default.min.js', ['
 							$canEdit    = AssociationsHelper::allowEdit($this->extensionName, $this->typeName, $item->id);
 							$canCheckin = $canManageCheckin || AssociationsHelper::canCheckinItem($this->extensionName, $this->typeName, $item->id);
 							$isCheckout = AssociationsHelper::isCheckoutItem($this->extensionName, $this->typeName, $item->id);
-						?>
+							?>
+
 							<tr class="row<?php echo $i % 2; ?>">
+								<td class="text-center">
+									<?php echo HTMLHelper::_('grid.id', $i, $item->id); ?>
+								</td>
 								<?php if (!empty($this->typeSupports['state'])) : ?>
 									<td class="text-center">
 										<span class="<?php echo $iconStates[$this->escape($item->state)]; ?>"></span>
@@ -150,6 +158,7 @@ HTMLHelper::_('script', 'com_associations/admin-associations-default.min.js', ['
 
 				<?php endif; ?>
 				<input type="hidden" name="task" value="">
+				<input type="hidden" name="boxchecked" value="0">
 				<?php echo HTMLHelper::_('form.token'); ?>
 			</div>
 		</div>

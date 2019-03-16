@@ -16,6 +16,7 @@ use Joomla\CMS\Language\Associations;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Router\Route;
+use Joomla\CMS\Toolbar\Toolbar;
 use Joomla\CMS\Toolbar\ToolbarHelper;
 use Joomla\Component\Associations\Administrator\Helper\AssociationsHelper;
 
@@ -214,6 +215,7 @@ class HtmlView extends BaseHtmlView
 	protected function addToolbar()
 	{
 		$user = Factory::getUser();
+		$toolbar = Toolbar::getInstance('toolbar');
 
 		if (isset($this->typeName) && isset($this->extensionName))
 		{
@@ -240,7 +242,22 @@ class HtmlView extends BaseHtmlView
 
 		if ($user->authorise('core.admin', 'com_associations') || $user->authorise('core.options', 'com_associations'))
 		{
-				ToolbarHelper::custom('associations.purge', 'purge', 'purge', 'COM_ASSOCIATIONS_PURGE', false, false);
+			$dropdown = $toolbar->dropdownButton('status-group')
+				->text('JTOOLBAR_CHANGE_STATUS')
+				->toggleSplit(false)
+				->icon('fa fa-globe')
+				->buttonClass('btn btn-info')
+				->listCheck(true);
+
+			$childBar = $dropdown->getChildToolbar();
+
+			$childBar->standardButton('delete-assoc')
+				->text('COM_ASSOCIATIONS_PURGE')
+				->task('associations.purge')
+				->icon('icon-purge')
+				->listCheck(true);
+
+				ToolbarHelper::custom('associations.purgeAll', 'purge', 'purge', 'COM_ASSOCIATIONS_PURGE_ALL', false, false);
 				ToolbarHelper::custom('associations.clean', 'refresh', 'refresh', 'COM_ASSOCIATIONS_DELETE_ORPHANS', false, false);
 				ToolbarHelper::preferences('com_associations');
 		}
