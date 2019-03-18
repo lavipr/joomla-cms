@@ -251,13 +251,18 @@ class HtmlView extends BaseHtmlView
 
 			$childBar = $dropdown->getChildToolbar();
 
-			$childBar->standardButton('delete-assoc')
+			$childBar->confirmButton('delete-assoc')
 				->text('COM_ASSOCIATIONS_PURGE')
 				->task('associations.purge')
 				->icon('icon-purge')
+				->message('COM_ASSOCIATIONS_PURGE_CONFIRM_PROMPT')
 				->listCheck(true);
 
-				ToolbarHelper::custom('associations.purgeAll', 'purge', 'purge', 'COM_ASSOCIATIONS_PURGE_ALL', false, false);
+			$toolbar->confirmButton('purge')
+				->text('COM_ASSOCIATIONS_PURGE_ALL')
+				->message(Text::plural('COM_ASSOCIATIONS_PURGE_ALL_CONFIRM_PROMPT', (Text::_($this->extensionName) . " > " .  Text::_($languageKey))))
+				->task('associations.purgeAll');
+
 				ToolbarHelper::custom('associations.clean', 'refresh', 'refresh', 'COM_ASSOCIATIONS_DELETE_ORPHANS', false, false);
 				ToolbarHelper::preferences('com_associations');
 		}
