@@ -12,7 +12,7 @@ defined('_JEXEC') or die;
 /**
  * Request confirmation model class.
  *
- * @since  __DEPLOY_VERSION__
+ * @since  3.9.0
  */
 class PrivacyModelConfirm extends JModelAdmin
 {
@@ -23,7 +23,7 @@ class PrivacyModelConfirm extends JModelAdmin
 	 *
 	 * @return  mixed  Exception | JException | boolean
 	 *
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 */
 	public function confirmRequest($data)
 	{
@@ -125,6 +125,18 @@ class PrivacyModelConfirm extends JModelAdmin
 			return false;
 		}
 
+		// Push a notification to the site's super users, deliberately ignoring if this process fails so the below message goes out
+		JModelLegacy::addIncludePath(JPATH_ADMINISTRATOR . '/components/com_messages/models', 'MessagesModel');
+		JTable::addIncludePath(JPATH_ADMINISTRATOR . '/components/com_messages/tables');
+
+		/** @var MessagesModelMessage $messageModel */
+		$messageModel = JModelLegacy::getInstance('Message', 'MessagesModel');
+
+		$messageModel->notifySuperUsers(
+			JText::_('COM_PRIVACY_ADMIN_NOTIFICATION_USER_CONFIRMED_REQUEST_SUBJECT'),
+			JText::sprintf('COM_PRIVACY_ADMIN_NOTIFICATION_USER_CONFIRMED_REQUEST_MESSAGE', $table->email)
+		);
+
 		JModelLegacy::addIncludePath(JPATH_ADMINISTRATOR . '/components/com_actionlogs/models', 'ActionlogsModel');
 
 		$message = array(
@@ -134,23 +146,9 @@ class PrivacyModelConfirm extends JModelAdmin
 			'itemlink'     => 'index.php?option=com_privacy&view=request&id=' . $table->id,
 		);
 
-		$messageKey = 'COM_PRIVACY_ACTION_LOG_ANONYMOUS_CONFIRMED_REQUEST';
-		$userId     = null;
-
-		if ($table->user_id)
-		{
-			$messageKey = 'COM_PRIVACY_ACTION_LOG_USER_CONFIRMED_REQUEST';
-			$user       = JUser::getInstance($table->user_id);
-			$userId     = $user->id;
-
-			$message['userid']      = $user->id;
-			$message['username']    = $user->username;
-			$message['accountlink'] = 'index.php?option=com_users&task=user.edit&id=' . $user->id;
-		}
-
 		/** @var ActionlogsModelActionlog $model */
 		$model = JModelLegacy::getInstance('Actionlog', 'ActionlogsModel');
-		$model->addLogsToDb(array($message), $messageKey, 'com_privacy.request', $userId);
+		$model->addLog(array($message), 'COM_PRIVACY_ACTION_LOG_CONFIRMED_REQUEST', 'com_privacy.request');
 
 		return true;
 	}
@@ -163,7 +161,7 @@ class PrivacyModelConfirm extends JModelAdmin
 	 *
 	 * @return  JForm|boolean  A JForm object on success, false on failure
 	 *
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 */
 	public function getForm($data = array(), $loadData = true)
 	{
@@ -194,7 +192,7 @@ class PrivacyModelConfirm extends JModelAdmin
 	 *
 	 * @return  JTable  A JTable object
 	 *
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 * @throws  \Exception
 	 */
 	public function getTable($name = 'Request', $prefix = 'PrivacyTable', $options = array())
@@ -209,7 +207,7 @@ class PrivacyModelConfirm extends JModelAdmin
 	 *
 	 * @return  void
 	 *
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 */
 	protected function populateState()
 	{

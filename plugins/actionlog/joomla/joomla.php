@@ -10,13 +10,14 @@
 defined('_JEXEC') or die;
 
 use Joomla\CMS\Component\ComponentHelper;
+use Joomla\Utilities\ArrayHelper;
 
 JLoader::register('ActionlogsHelper', JPATH_ADMINISTRATOR . '/components/com_actionlogs/helpers/actionlogs.php');
 
 /**
  * Joomla! Users Actions Logging Plugin.
  *
- * @since  __DEPLOY_VERSION__
+ * @since  3.9.0
  */
 class PlgActionlogJoomla extends JPlugin
 {
@@ -24,7 +25,7 @@ class PlgActionlogJoomla extends JPlugin
 	 * Array of loggable extensions.
 	 *
 	 * @var    array
-	 * @since  __DEPLOY_VERSION__
+	 * @since  3.9.0
 	 */
 	protected $loggableExtensions = array();
 
@@ -32,7 +33,7 @@ class PlgActionlogJoomla extends JPlugin
 	 * Application object.
 	 *
 	 * @var    JApplicationCms
-	 * @since  __DEPLOY_VERSION__
+	 * @since  3.9.0
 	 */
 	protected $app;
 
@@ -40,15 +41,15 @@ class PlgActionlogJoomla extends JPlugin
 	 * Database object.
 	 *
 	 * @var    JDatabaseDriver
-	 * @since  __DEPLOY_VERSION__
+	 * @since  3.9.0
 	 */
 	protected $db;
 
 	/**
 	 * Load plugin language file automatically so that it can be used inside component
 	 *
-	 * @var    bool
-	 * @since  __DEPLOY_VERSION__
+	 * @var    boolean
+	 * @since  3.9.0
 	 */
 	protected $autoloadLanguage = true;
 
@@ -58,7 +59,7 @@ class PlgActionlogJoomla extends JPlugin
 	 * @param   object  &$subject  The object to observe.
 	 * @param   array   $config    An optional associative array of configuration settings.
 	 *
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 */
 	public function __construct(&$subject, $config)
 	{
@@ -66,14 +67,7 @@ class PlgActionlogJoomla extends JPlugin
 
 		$params = ComponentHelper::getComponent('com_actionlogs')->getParams();
 
-		if (is_array($params->get('loggable_extensions')))
-		{
-			$this->loggableExtensions = $params->get('loggable_extensions');
-		}
-		else
-		{
-			$this->loggableExtensions = explode(',', $params->get('loggable_extensions'));
-		}
+		$this->loggableExtensions = $params->get('loggable_extensions', array());
 	}
 
 	/**
@@ -87,7 +81,7 @@ class PlgActionlogJoomla extends JPlugin
 	 *
 	 * @return  void
 	 *
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 */
 	public function onContentAfterSave($context, $article, $isNew)
 	{
@@ -106,19 +100,20 @@ class PlgActionlogJoomla extends JPlugin
 			return;
 		}
 
-		$user        = JFactory::getUser();
-		$contentType = strtoupper($params->type_title);
+		$user             = JFactory::getUser();
+		$contentTypeTitle = strtoupper($params->type_title);
+		list(, $contentType) = explode('.', $params->type_alias);
 
 		if ($isNew)
 		{
-			$messageLanguageKey = strtoupper($params->text_prefix . '_' . $contentType . '_ADDED');
+			$messageLanguageKey = strtoupper($params->text_prefix . '_' . $contentTypeTitle . '_ADDED');
 			$defaultLanguageKey = strtoupper('PLG_SYSTEM_ACTIONLOGS_CONTENT_ADDED');
 
 			$action = 'add';
 		}
 		else
 		{
-			$messageLanguageKey = strtoupper($params->text_prefix . '_' . $contentType . '_UPDATED');
+			$messageLanguageKey = strtoupper($params->text_prefix . '_' . $contentTypeTitle . '_UPDATED');
 			$defaultLanguageKey = strtoupper('PLG_SYSTEM_ACTIONLOGS_CONTENT_UPDATED');
 
 			$action = 'update';
@@ -134,16 +129,16 @@ class PlgActionlogJoomla extends JPlugin
 
 		$message = array(
 			'action'      => $action,
-			'type'        => strtoupper($params->text_prefix . '_TYPE_' . $contentType),
+			'type'        => strtoupper($params->text_prefix . '_TYPE_' . $contentTypeTitle),
 			'id'          => $id,
 			'title'       => $article->get($params->title_holder),
-			'itemlink'    => ActionlogsHelper::getContentTypeLink($option, $params->type_title, $id),
+			'itemlink'    => ActionlogsHelper::getContentTypeLink($option, $contentType, $id),
 			'userid'      => $user->id,
 			'username'    => $user->username,
 			'accountlink' => 'index.php?option=com_users&task=user.edit&id=' . $user->id,
 		);
 
-		$this->addLogsToDb(array($message), $messageLanguageKey, $context);
+		$this->addLog(array($message), $messageLanguageKey, $context);
 	}
 
 	/**
@@ -156,7 +151,7 @@ class PlgActionlogJoomla extends JPlugin
 	 *
 	 * @return  void
 	 *
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 */
 	public function onContentAfterDelete($context, $article)
 	{
@@ -175,14 +170,14 @@ class PlgActionlogJoomla extends JPlugin
 			return;
 		}
 
-		$language    = JFactory::getLanguage();
-		$user        = JFactory::getUser();
-		$contentType = strtoupper($params->type_title);
+		$language         = JFactory::getLanguage();
+		$user             = JFactory::getUser();
+		$contentTypeTitle = strtoupper($params->type_title);
 
 		// If the content type has it own language key, use it, otherwise, use default language key
-		if ($language->hasKey(strtoupper($params->text_prefix . '_' . $contentType . '_DELETED')))
+		if ($language->hasKey(strtoupper($params->text_prefix . '_' . $contentTypeTitle . '_DELETED')))
 		{
-			$messageLanguageKey = strtoupper($params->text_prefix . '_' . $contentType . '_DELETED');
+			$messageLanguageKey = strtoupper($params->text_prefix . '_' . $contentTypeTitle . '_DELETED');
 		}
 		else
 		{
@@ -193,7 +188,7 @@ class PlgActionlogJoomla extends JPlugin
 
 		$message = array(
 			'action'      => 'delete',
-			'type'        => strtoupper($params->text_prefix . '_TYPE_' . $contentType),
+			'type'        => strtoupper($params->text_prefix . '_TYPE_' . $contentTypeTitle),
 			'id'          => $id,
 			'title'       => $article->get($params->title_holder),
 			'userid'      => $user->id,
@@ -201,7 +196,7 @@ class PlgActionlogJoomla extends JPlugin
 			'accountlink' => 'index.php?option=com_users&task=user.edit&id=' . $user->id,
 		);
 
-		$this->addLogsToDb(array($message), $messageLanguageKey, $context);
+		$this->addLog(array($message), $messageLanguageKey, $context);
 	}
 
 	/**
@@ -215,7 +210,7 @@ class PlgActionlogJoomla extends JPlugin
 	 *
 	 * @return  void
 	 *
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 */
 	public function onContentChangeState($context, $pks, $value)
 	{
@@ -234,28 +229,29 @@ class PlgActionlogJoomla extends JPlugin
 			return;
 		}
 
-		$user        = JFactory::getUser();
-		$contentType = strtoupper($params->type_title);
+		$user             = JFactory::getUser();
+		$contentTypeTitle = strtoupper($params->type_title);
+		list(, $contentType) = explode('.', $params->type_alias);
 
 		switch ($value)
 		{
 			case 0:
-				$messageLanguageKey = strtoupper($params->text_prefix . '_' . $contentType . '_UNPUBLISHED');
+				$messageLanguageKey = strtoupper($params->text_prefix . '_' . $contentTypeTitle . '_UNPUBLISHED');
 				$defaultLanguageKey = 'PLG_SYSTEM_ACTIONLOGS_CONTENT_UNPUBLISHED';
 				$action             = 'unpublish';
 				break;
 			case 1:
-				$messageLanguageKey = strtoupper($params->text_prefix . '_' . $contentType . '_PUBLISHED');
+				$messageLanguageKey = strtoupper($params->text_prefix . '_' . $contentTypeTitle . '_PUBLISHED');
 				$defaultLanguageKey = 'PLG_SYSTEM_ACTIONLOGS_CONTENT_PUBLISHED';
 				$action             = 'publish';
 				break;
 			case 2:
-				$messageLanguageKey = strtoupper($params->text_prefix . '_' . $contentType . '_ARCHIVED');
+				$messageLanguageKey = strtoupper($params->text_prefix . '_' . $contentTypeTitle . '_ARCHIVED');
 				$defaultLanguageKey = 'PLG_SYSTEM_ACTIONLOGS_CONTENT_ARCHIVED';
 				$action             = 'archive';
 				break;
 			case -2:
-				$messageLanguageKey = strtoupper($params->text_prefix . '_' . $contentType . '_TRASHED');
+				$messageLanguageKey = strtoupper($params->text_prefix . '_' . $contentTypeTitle . '_TRASHED');
 				$defaultLanguageKey = 'PLG_SYSTEM_ACTIONLOGS_CONTENT_TRASHED';
 				$action             = 'trash';
 				break;
@@ -272,7 +268,21 @@ class PlgActionlogJoomla extends JPlugin
 			$messageLanguageKey = $defaultLanguageKey;
 		}
 
-		$items = ActionlogsHelper::getDataByPks($pks, $params->title_holder, $params->id_holder, $params->table_name);
+		$db    = JFactory::getDbo();
+		$query = $db->getQuery(true)
+			->select($db->quoteName(array($params->title_holder, $params->id_holder)))
+			->from($db->quoteName($params->table_name))
+			->where($db->quoteName($params->id_holder) . ' IN (' . implode(',', ArrayHelper::toInteger($pks)) . ')');
+		$db->setQuery($query);
+
+		try
+		{
+			$items = $db->loadObjectList($params->id_holder);
+		}
+		catch (RuntimeException $e)
+		{
+			$items = array();
+		}
 
 		$messages = array();
 
@@ -283,7 +293,7 @@ class PlgActionlogJoomla extends JPlugin
 				'type'        => strtoupper($params->text_prefix . '_TYPE_' . $params->type_title),
 				'id'          => $pk,
 				'title'       => $items[$pk]->{$params->title_holder},
-				'itemlink'    => ActionlogsHelper::getContentTypeLink($option, $params->type_title, $pk),
+				'itemlink'    => ActionlogsHelper::getContentTypeLink($option, $contentType, $pk),
 				'userid'      => $user->id,
 				'username'    => $user->username,
 				'accountlink' => 'index.php?option=com_users&task=user.edit&id=' . $user->id,
@@ -292,7 +302,44 @@ class PlgActionlogJoomla extends JPlugin
 			$messages[] = $message;
 		}
 
-		$this->addLogsToDb($messages, $messageLanguageKey, $context);
+		$this->addLog($messages, $messageLanguageKey, $context);
+	}
+
+	/**
+	 * On Saving application configuration logging method
+	 * Method is called when the application config is being saved
+	 *
+	 * @param   JRegistry  $config  JRegistry object with the new config
+	 *
+	 * @return  void
+	 *
+	 * @since   3.9.0
+	 */
+	public function onApplicationAfterSave($config)
+	{
+		$option = $this->app->input->getCmd('option');
+
+		if (!$this->checkLoggable($option))
+		{
+			return;
+		}
+
+		$messageLanguageKey = strtoupper('PLG_ACTIONLOG_JOOMLA_APPLICATION_CONFIG_UPDATED');
+		$action             = 'update';
+
+		$user = JFactory::getUser();
+
+		$message = array(
+			'action'         => $action,
+			'type'           => strtoupper('PLG_ACTIONLOG_JOOMLA_TYPE_APPLICATION_CONFIG'),
+			'extension_name' => 'com_config.application',
+			'itemlink'       => 'index.php?option=com_config',
+			'userid'         => $user->id,
+			'username'       => $user->username,
+			'accountlink'    => 'index.php?option=com_users&task=user.edit&id=' . $user->id,
+		);
+
+		$this->addLog(array($message), $messageLanguageKey, 'com_config.application');
 	}
 
 	/**
@@ -305,7 +352,7 @@ class PlgActionlogJoomla extends JPlugin
 	 *
 	 * @return  void
 	 *
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 */
 	public function onExtensionAfterInstall($installer, $eid)
 	{
@@ -319,6 +366,12 @@ class PlgActionlogJoomla extends JPlugin
 		$language      = JFactory::getLanguage();
 		$user          = JFactory::getUser();
 		$manifest      = $installer->get('manifest');
+
+		if ($manifest === null)
+		{
+			return;
+		}
+
 		$extensionType = $manifest->attributes()->type;
 
 		// If the extension type has it own language key, use it, otherwise, use default language key
@@ -342,7 +395,7 @@ class PlgActionlogJoomla extends JPlugin
 			'accountlink'    => 'index.php?option=com_users&task=user.edit&id=' . $user->id,
 		);
 
-		$this->addLogsToDb(array($message), $messageLanguageKey, $context);
+		$this->addLog(array($message), $messageLanguageKey, $context);
 	}
 
 	/**
@@ -356,7 +409,7 @@ class PlgActionlogJoomla extends JPlugin
 	 *
 	 * @return  void
 	 *
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 */
 	public function onExtensionAfterUninstall($installer, $eid, $result)
 	{
@@ -376,6 +429,12 @@ class PlgActionlogJoomla extends JPlugin
 		$language      = JFactory::getLanguage();
 		$user          = JFactory::getUser();
 		$manifest      = $installer->get('manifest');
+
+		if ($manifest === null)
+		{
+			return;
+		}
+
 		$extensionType = $manifest->attributes()->type;
 
 		// If the extension type has it own language key, use it, otherwise, use default language key
@@ -399,7 +458,7 @@ class PlgActionlogJoomla extends JPlugin
 			'accountlink'    => 'index.php?option=com_users&task=user.edit&id=' . $user->id,
 		);
 
-		$this->addLogsToDb(array($message), $messageLanguageKey, $context);
+		$this->addLog(array($message), $messageLanguageKey, $context);
 	}
 
 	/**
@@ -412,7 +471,7 @@ class PlgActionlogJoomla extends JPlugin
 	 *
 	 * @return  void
 	 *
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 */
 	public function onExtensionAfterUpdate($installer, $eid)
 	{
@@ -426,6 +485,12 @@ class PlgActionlogJoomla extends JPlugin
 		$language      = JFactory::getLanguage();
 		$user          = JFactory::getUser();
 		$manifest      = $installer->get('manifest');
+
+		if ($manifest === null)
+		{
+			return;
+		}
+
 		$extensionType = $manifest->attributes()->type;
 
 		// If the extension type has it own language key, use it, otherwise, use default language key
@@ -449,7 +514,7 @@ class PlgActionlogJoomla extends JPlugin
 			'accountlink'    => 'index.php?option=com_users&task=user.edit&id=' . $user->id,
 		);
 
-		$this->addLogsToDb(array($message), $messageLanguageKey, $context);
+		$this->addLog(array($message), $messageLanguageKey, $context);
 	}
 
 	/**
@@ -462,7 +527,7 @@ class PlgActionlogJoomla extends JPlugin
 	 *
 	 * @return  void
 	 *
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 */
 	public function onExtensionAfterSave($context, $table, $isNew)
 	{
@@ -482,6 +547,7 @@ class PlgActionlogJoomla extends JPlugin
 		}
 
 		$extensionType = $params->type_title;
+		list(, $contentType) = explode('.', $params->type_alias);
 
 		if ($isNew)
 		{
@@ -491,7 +557,6 @@ class PlgActionlogJoomla extends JPlugin
 		}
 		else
 		{
-
 			$messageLanguageKey = strtoupper('PLG_ACTIONLOG_JOOMLA_' . $extensionType . '_UPDATED');
 			$defaultLanguageKey = 'PLG_SYSTEM_ACTIONLOGS_CONTENT_UPDATED';
 			$action             = 'update';
@@ -511,13 +576,13 @@ class PlgActionlogJoomla extends JPlugin
 			'id'             => $table->get($params->id_holder),
 			'title'          => $table->get($params->title_holder),
 			'extension_name' => $table->get($params->title_holder),
-			'itemlink'       => ActionlogsHelper::getContentTypeLink($option, $params->type_title, $table->get($params->id_holder), $params->id_holder),
+			'itemlink'       => ActionlogsHelper::getContentTypeLink($option, $contentType, $table->get($params->id_holder), $params->id_holder),
 			'userid'         => $user->id,
 			'username'       => $user->username,
 			'accountlink'    => 'index.php?option=com_users&task=user.edit&id=' . $user->id,
 		);
 
-		$this->addLogsToDb(array($message), $messageLanguageKey, $context);
+		$this->addLog(array($message), $messageLanguageKey, $context);
 	}
 
 	/**
@@ -529,7 +594,7 @@ class PlgActionlogJoomla extends JPlugin
 	 *
 	 * @return  void
 	 *
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 */
 	public function onExtensionAfterDelete($context, $table)
 	{
@@ -558,7 +623,7 @@ class PlgActionlogJoomla extends JPlugin
 			'accountlink' => 'index.php?option=com_users&task=user.edit&id=' . $user->id,
 		);
 
-		$this->addLogsToDb(array($message), $messageLanguageKey, $context);
+		$this->addLog(array($message), $messageLanguageKey, $context);
 	}
 
 	/**
@@ -574,11 +639,12 @@ class PlgActionlogJoomla extends JPlugin
 	 *
 	 * @return  void
 	 *
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 */
 	public function onUserAfterSave($user, $isnew, $success, $msg)
 	{
 		$context = $this->app->input->get('option');
+		$task    = $this->app->input->get->getCmd('task');
 
 		if (!$this->checkLoggable($context))
 		{
@@ -587,7 +653,26 @@ class PlgActionlogJoomla extends JPlugin
 
 		$jUser = JFactory::getUser();
 
-		if ($isnew)
+		if (!$jUser->id)
+		{
+			$messageLanguageKey = 'PLG_ACTIONLOG_JOOMLA_USER_REGISTERED';
+			$action             = 'register';
+
+			// Reset request
+			if ($task === 'reset.request')
+			{
+				$messageLanguageKey = 'PLG_ACTIONLOG_JOOMLA_USER_RESET_REQUEST';
+				$action             = 'resetrequest';
+			}
+
+			// Reset complete
+			if ($task === 'reset.complete')
+			{
+				$messageLanguageKey = 'PLG_ACTIONLOG_JOOMLA_USER_RESET_COMPLETE';
+				$action             = 'resetcomplete';
+			}
+		}
+		elseif ($isnew)
 		{
 			$messageLanguageKey = 'PLG_SYSTEM_ACTIONLOGS_CONTENT_ADDED';
 			$action             = 'add';
@@ -598,18 +683,21 @@ class PlgActionlogJoomla extends JPlugin
 			$action             = 'update';
 		}
 
+		$userId = $jUser->id ?: $user['id'];
+		$username = $jUser->username ?: $user['username'];
+
 		$message = array(
 			'action'      => $action,
 			'type'        => 'PLG_ACTIONLOG_JOOMLA_TYPE_USER',
 			'id'          => $user['id'],
 			'title'       => $user['name'],
 			'itemlink'    => 'index.php?option=com_users&task=user.edit&id=' . $user['id'],
-			'userid'      => $jUser->id,
-			'username'    => $jUser->username,
-			'accountlink' => 'index.php?option=com_users&task=user.edit&id=' . $jUser->id,
+			'userid'      => $userId,
+			'username'    => $username,
+			'accountlink' => 'index.php?option=com_users&task=user.edit&id=' . $userId,
 		);
 
-		$this->addLogsToDb(array($message), $messageLanguageKey, $context);
+		$this->addLog(array($message), $messageLanguageKey, $context, $userId);
 	}
 
 	/**
@@ -623,7 +711,7 @@ class PlgActionlogJoomla extends JPlugin
 	 *
 	 * @return  void
 	 *
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 */
 	public function onUserAfterDelete($user, $success, $msg)
 	{
@@ -647,7 +735,7 @@ class PlgActionlogJoomla extends JPlugin
 			'accountlink' => 'index.php?option=com_users&task=user.edit&id=' . $jUser->id,
 		);
 
-		$this->addLogsToDb(array($message), $messageLanguageKey, $context);
+		$this->addLog(array($message), $messageLanguageKey, $context);
 	}
 
 	/**
@@ -661,7 +749,7 @@ class PlgActionlogJoomla extends JPlugin
 	 *
 	 * @return  void
 	 *
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 */
 	public function onUserAfterSaveGroup($context, $table, $isNew)
 	{
@@ -696,7 +784,7 @@ class PlgActionlogJoomla extends JPlugin
 			'accountlink' => 'index.php?option=com_users&task=user.edit&id=' . $user->id,
 		);
 
-		$this->addLogsToDb(array($message), $messageLanguageKey, $context);
+		$this->addLog(array($message), $messageLanguageKey, $context);
 	}
 
 	/**
@@ -710,7 +798,7 @@ class PlgActionlogJoomla extends JPlugin
 	 *
 	 * @return  void
 	 *
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 */
 	public function onUserAfterDeleteGroup($group, $success, $msg)
 	{
@@ -735,20 +823,19 @@ class PlgActionlogJoomla extends JPlugin
 			'accountlink' => 'index.php?option=com_users&task=user.edit&id=' . $user->id,
 		);
 
-		$this->addLogsToDb(array($message), $messageLanguageKey, $context);
+		$this->addLog(array($message), $messageLanguageKey, $context);
 	}
 
 	/**
-	 * Method to log user log-in action
+	 * Method to log user login success action
 	 *
-	 * @param   array  $user     Holds the user data
-	 * @param   array  $options  Array holding options (remember, autoregister, group)
+	 * @param   array  $options  Array holding options (user, responseType)
 	 *
 	 * @return  void
 	 *
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 */
-	public function onUserLogin($user, $options = array())
+	public function onUserAfterLogin($options)
 	{
 		$context = 'com_users';
 
@@ -757,8 +844,46 @@ class PlgActionlogJoomla extends JPlugin
 			return;
 		}
 
-		$loggedInUser       = JUser::getInstance($user['username']);
+		$loggedInUser       = $options['user'];
 		$messageLanguageKey = 'PLG_ACTIONLOG_JOOMLA_USER_LOGGED_IN';
+
+		$message = array(
+			'action'      => 'login',
+			'username'    => $loggedInUser->username,
+			'accountlink' => 'index.php?option=com_users&task=user.edit&id=' . $loggedInUser->id,
+			'app'         => strtoupper('PLG_ACTIONLOG_JOOMLA_APPLICATION_' . $this->app->getName()),
+		);
+
+		$this->addLog(array($message), $messageLanguageKey, $context, $loggedInUser->id);
+	}
+
+	/**
+	 * Method to log user login failed action
+	 *
+	 * @param   array  $response  Array of response data.
+	 *
+	 * @return  void
+	 *
+	 * @since   3.9.0
+	 */
+	public function onUserLoginFailure($response)
+	{
+		$context = 'com_users';
+
+		if (!$this->checkLoggable($context))
+		{
+			return;
+		}
+
+		$loggedInUser       = JUser::getInstance($response['username']);
+
+		// Not a valid user, return
+		if (!$loggedInUser->id)
+		{
+			return;
+		}
+
+		$messageLanguageKey = 'PLG_ACTIONLOG_JOOMLA_USER_LOGIN_FAILED';
 
 		$message = array(
 			'action'      => 'login',
@@ -768,7 +893,7 @@ class PlgActionlogJoomla extends JPlugin
 			'app'         => strtoupper('PLG_ACTIONLOG_JOOMLA_APPLICATION_' . $this->app->getName()),
 		);
 
-		$this->addLogsToDb(array($message), $messageLanguageKey, $context, $loggedInUser->id);
+		$this->addLog(array($message), $messageLanguageKey, $context, $loggedInUser->id);
 	}
 
 	/**
@@ -779,7 +904,7 @@ class PlgActionlogJoomla extends JPlugin
 	 *
 	 * @return  void
 	 *
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 */
 	public function onUserLogout($user, $options = array())
 	{
@@ -801,11 +926,11 @@ class PlgActionlogJoomla extends JPlugin
 			'app'         => strtoupper('PLG_ACTIONLOG_JOOMLA_APPLICATION_' . $this->app->getName()),
 		);
 
-		$this->addLogsToDb(array($message), $messageLanguageKey, $context);
+		$this->addLog(array($message), $messageLanguageKey, $context);
 	}
 
 	/**
-	 * Proxy for ActionlogsModelUserlog addLogsToDb method
+	 * Proxy for ActionlogsModelUserlog addLog method
 	 *
 	 * This method adds a record to #__action_logs contains (message_language_key, message, date, context, user)
 	 *
@@ -816,15 +941,15 @@ class PlgActionlogJoomla extends JPlugin
 	 *
 	 * @return  void
 	 *
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 */
-	protected function addLogsToDb($messages, $messageLanguageKey, $context, $userId = null)
+	protected function addLog($messages, $messageLanguageKey, $context, $userId = null)
 	{
 		JLoader::register('ActionlogsModelActionlog', JPATH_ADMINISTRATOR . '/components/com_actionlogs/models/actionlog.php');
 
 		/* @var ActionlogsModelActionlog $model */
 		$model = JModelLegacy::getInstance('Actionlog', 'ActionlogsModel');
-		$model->addLogsToDb($messages, $messageLanguageKey, $context, $userId);
+		$model->addLog($messages, $messageLanguageKey, $context, $userId);
 	}
 
 	/**
@@ -834,10 +959,44 @@ class PlgActionlogJoomla extends JPlugin
 	 *
 	 * @return  boolean
 	 *
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 */
 	protected function checkLoggable($extension)
 	{
 		return in_array($extension, $this->loggableExtensions);
+	}
+
+	/**
+	 * On after Remind username request
+	 *
+	 * Method is called after user request to remind their username.
+	 *
+	 * @param   array  $user  Holds the user data.
+	 *
+	 * @return  void
+	 *
+	 * @since   3.9.0
+	 */
+	public function onUserAfterRemind($user)
+	{
+		$context = $this->app->input->get('option');
+
+		if (!$this->checkLoggable($context))
+		{
+			return;
+		}
+
+		$message = array(
+			'action'      => 'remind',
+			'type'        => 'PLG_ACTIONLOG_JOOMLA_TYPE_USER',
+			'id'          => $user->id,
+			'title'       => $user->name,
+			'itemlink'    => 'index.php?option=com_users&task=user.edit&id=' . $user->id,
+			'userid'      => $user->id,
+			'username'    => $user->name,
+			'accountlink' => 'index.php?option=com_users&task=user.edit&id=' . $user->id,
+		);
+
+		$this->addLog(array($message), 'PLG_ACTIONLOG_JOOMLA_USER_REMIND', $context, $user->id);
 	}
 }

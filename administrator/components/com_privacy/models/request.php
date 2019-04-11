@@ -12,7 +12,7 @@ defined('_JEXEC') or die;
 /**
  * Request item model class.
  *
- * @since  __DEPLOY_VERSION__
+ * @since  3.9.0
  */
 class PrivacyModelRequest extends JModelAdmin
 {
@@ -24,7 +24,7 @@ class PrivacyModelRequest extends JModelAdmin
 	 *
 	 * @return  void
 	 *
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 */
 	protected function cleanCache($group = 'com_privacy', $client_id = 1)
 	{
@@ -39,7 +39,7 @@ class PrivacyModelRequest extends JModelAdmin
 	 *
 	 * @return  JForm|boolean  A JForm object on success, false on failure
 	 *
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 */
 	public function getForm($data = array(), $loadData = true)
 	{
@@ -63,7 +63,7 @@ class PrivacyModelRequest extends JModelAdmin
 	 *
 	 * @return  JTable  A JTable object
 	 *
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 * @throws  \Exception
 	 */
 	public function getTable($name = 'Request', $prefix = 'PrivacyTable', $options = array())
@@ -76,7 +76,7 @@ class PrivacyModelRequest extends JModelAdmin
 	 *
 	 * @return  array  The default data is an empty array.
 	 *
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 */
 	protected function loadFormData()
 	{
@@ -98,7 +98,7 @@ class PrivacyModelRequest extends JModelAdmin
 	 *
 	 * @return  boolean
 	 *
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 */
 	public function logRequestCompleted($id)
 	{
@@ -129,7 +129,7 @@ class PrivacyModelRequest extends JModelAdmin
 
 		/** @var ActionlogsModelActionlog $model */
 		$model = JModelLegacy::getInstance('Actionlog', 'ActionlogsModel');
-		$model->addLogsToDb(array($message), 'COM_PRIVACY_ACTION_LOG_ADMIN_COMPLETED_REQUEST', 'com_privacy.request', $user->id);
+		$model->addLog(array($message), 'COM_PRIVACY_ACTION_LOG_ADMIN_COMPLETED_REQUEST', 'com_privacy.request', $user->id);
 
 		return true;
 	}
@@ -141,7 +141,7 @@ class PrivacyModelRequest extends JModelAdmin
 	 *
 	 * @return  boolean
 	 *
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 */
 	public function logRequestCreated($id)
 	{
@@ -172,7 +172,7 @@ class PrivacyModelRequest extends JModelAdmin
 
 		/** @var ActionlogsModelActionlog $model */
 		$model = JModelLegacy::getInstance('Actionlog', 'ActionlogsModel');
-		$model->addLogsToDb(array($message), 'COM_PRIVACY_ACTION_LOG_ADMIN_CREATED_REQUEST', 'com_privacy.request', $user->id);
+		$model->addLog(array($message), 'COM_PRIVACY_ACTION_LOG_ADMIN_CREATED_REQUEST', 'com_privacy.request', $user->id);
 
 		return true;
 	}
@@ -184,7 +184,7 @@ class PrivacyModelRequest extends JModelAdmin
 	 *
 	 * @return  boolean
 	 *
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 */
 	public function logRequestInvalidated($id)
 	{
@@ -215,7 +215,7 @@ class PrivacyModelRequest extends JModelAdmin
 
 		/** @var ActionlogsModelActionlog $model */
 		$model = JModelLegacy::getInstance('Actionlog', 'ActionlogsModel');
-		$model->addLogsToDb(array($message), 'COM_PRIVACY_ACTION_LOG_ADMIN_INVALIDATED_REQUEST', 'com_privacy.request', $user->id);
+		$model->addLog(array($message), 'COM_PRIVACY_ACTION_LOG_ADMIN_INVALIDATED_REQUEST', 'com_privacy.request', $user->id);
 
 		return true;
 	}
@@ -230,7 +230,7 @@ class PrivacyModelRequest extends JModelAdmin
 	 *
 	 * @return  boolean
 	 *
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 */
 	public function notifyUserAdminCreatedRequest($id)
 	{
@@ -254,9 +254,20 @@ class PrivacyModelRequest extends JModelAdmin
 
 		$lang = JFactory::getLanguage();
 
-		if ($table->user_id)
+		$db = $this->getDbo();
+
+		$userId = (int) $db->setQuery(
+			$db->getQuery(true)
+				->select('id')
+				->from($db->quoteName('#__users'))
+				->where($db->quoteName('email') . ' = ' . $db->quote($table->email)),
+			0,
+			1
+		)->loadResult();
+
+		if ($userId)
 		{
-			$receiver = JUser::getInstance($table->user_id);
+			$receiver = JUser::getInstance($userId);
 
 			/*
 			 * We don't know if the user has admin access, so we will check if they have an admin language in their parameters,
@@ -311,17 +322,17 @@ class PrivacyModelRequest extends JModelAdmin
 				'\\n'        => "\n",
 			);
 
-			$emailSubject = $lang->_('COM_PRIVACY_EMAIL_ADMIN_REQUEST_SUBJECT');
-
 			switch ($table->request_type)
 			{
 				case 'export':
-					$emailBody = $lang->_('COM_PRIVACY_EMAIL_ADMIN_REQUEST_BODY_EXPORT_REQUEST');
+					$emailSubject = $lang->_('COM_PRIVACY_EMAIL_ADMIN_REQUEST_SUBJECT_EXPORT_REQUEST');
+					$emailBody    = $lang->_('COM_PRIVACY_EMAIL_ADMIN_REQUEST_BODY_EXPORT_REQUEST');
 
 					break;
 
 				case 'remove':
-					$emailBody = $lang->_('COM_PRIVACY_EMAIL_ADMIN_REQUEST_BODY_REMOVE_REQUEST');
+					$emailSubject = $lang->_('COM_PRIVACY_EMAIL_ADMIN_REQUEST_SUBJECT_REMOVE_REQUEST');
+					$emailBody    = $lang->_('COM_PRIVACY_EMAIL_ADMIN_REQUEST_BODY_REMOVE_REQUEST');
 
 					break;
 
@@ -367,6 +378,31 @@ class PrivacyModelRequest extends JModelAdmin
 	}
 
 	/**
+	 * Method to save the form data.
+	 *
+	 * @param   array  $data  The form data.
+	 *
+	 * @return  boolean  True on success, False on error.
+	 *
+	 * @since   3.9.0
+	 */
+	public function save($data)
+	{
+		$table = $this->getTable();
+		$key   = $table->getKeyName();
+		$pk    = !empty($data[$key]) ? $data[$key] : (int) $this->getState($this->getName() . '.id');
+
+		if (!$pk && !JFactory::getConfig()->get('mailonline', 1))
+		{
+			$this->setError(JText::_('COM_PRIVACY_ERROR_CANNOT_CREATE_REQUEST_WHEN_SENDMAIL_DISABLED'));
+
+			return false;
+		}
+
+		return parent::save($data);
+	}
+
+	/**
 	 * Method to validate the form data.
 	 *
 	 * @param   JForm   $form   The form to validate against.
@@ -377,7 +413,7 @@ class PrivacyModelRequest extends JModelAdmin
 	 *
 	 * @see     JFormRule
 	 * @see     JFilterInput
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 */
 	public function validate($form, $data, $group = null)
 	{

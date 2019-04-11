@@ -12,7 +12,7 @@ defined('_JEXEC') or die;
 /**
  * Joomla! Users Actions Logging Plugin.
  *
- * @since  __DEPLOY_VERSION__
+ * @since  3.9.0
  */
 class PlgSystemActionLogs extends JPlugin
 {
@@ -20,7 +20,7 @@ class PlgSystemActionLogs extends JPlugin
 	 * Application object.
 	 *
 	 * @var    JApplicationCms
-	 * @since  __DEPLOY_VERSION__
+	 * @since  3.9.0
 	 */
 	protected $app;
 
@@ -28,7 +28,7 @@ class PlgSystemActionLogs extends JPlugin
 	 * Database object.
 	 *
 	 * @var    JDatabaseDriver
-	 * @since  __DEPLOY_VERSION__
+	 * @since  3.9.0
 	 */
 	protected $db;
 
@@ -36,7 +36,7 @@ class PlgSystemActionLogs extends JPlugin
 	 * Load plugin language file automatically so that it can be used inside component
 	 *
 	 * @var    boolean
-	 * @since  __DEPLOY_VERSION__
+	 * @since  3.9.0
 	 */
 	protected $autoloadLanguage = true;
 
@@ -46,7 +46,7 @@ class PlgSystemActionLogs extends JPlugin
 	 * @param   object  &$subject  The object to observe.
 	 * @param   array   $config    An optional associative array of configuration settings.
 	 *
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 */
 	public function __construct(&$subject, $config)
 	{
@@ -64,7 +64,7 @@ class PlgSystemActionLogs extends JPlugin
 	 *
 	 * @return  boolean
 	 *
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 */
 	public function onContentPrepareForm($form, $data)
 	{
@@ -80,9 +80,40 @@ class PlgSystemActionLogs extends JPlugin
 		$allowedFormNames = array(
 			'com_users.profile',
 			'com_admin.profile',
+			'com_users.user',
 		);
 
-		if (!in_array($formName, $allowedFormNames) || !JFactory::getUser()->authorise('core.viewlogs'))
+		if (!in_array($formName, $allowedFormNames))
+		{
+			return true;
+		}
+
+		/**
+		 * We only allow users who has Super User permission change this setting for himself or for other users
+		 * who has same Super User permission
+		 */
+
+		$user = JFactory::getUser();
+
+		if (!$user->authorise('core.admin'))
+		{
+			return true;
+		}
+
+		// If we are on the save command, no data is passed to $data variable, we need to get it directly from request
+		$jformData = $this->app->input->get('jform', array(), 'array');
+
+		if ($jformData && !$data)
+		{
+			$data = $jformData;
+		}
+
+		if (is_array($data))
+		{
+			$data = (object) $data;
+		}
+
+		if (!empty($data->id) && !JUser::getInstance($data->id)->authorise('core.admin'))
 		{
 			return true;
 		}
@@ -96,7 +127,7 @@ class PlgSystemActionLogs extends JPlugin
 	 *
 	 * @return  void
 	 *
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 */
 	public function onAfterRespond()
 	{
@@ -107,7 +138,8 @@ class PlgSystemActionLogs extends JPlugin
 			return;
 		}
 
-		$deleteFrequency = 3600 * 24; // The delete frequency will be once per day
+		// The delete frequency will be once per day
+		$deleteFrequency = 3600 * 24;
 
 		// Do we need to run? Compare the last run timestamp stored in the plugin's options with the current
 		// timestamp. If the difference is greater than the cache timeout we shall not execute again.
@@ -173,10 +205,11 @@ class PlgSystemActionLogs extends JPlugin
 		}
 
 		$daysToDeleteAfter = (int) $this->params->get('logDeletePeriod', 0);
+		$now = $db->quote(JFactory::getDate()->toSql());
 
 		if ($daysToDeleteAfter > 0)
 		{
-			$conditions = array($db->quoteName('log_date') . ' < DATE_SUB(NOW(), INTERVAL ' . $daysToDeleteAfter . ' DAY)');
+			$conditions = array($db->quoteName('log_date') . ' < ' . $query->dateAdd($now, -1 * $daysToDeleteAfter , ' DAY'));
 
 			$query->clear()
 				->delete($db->quoteName('#__action_logs'))->where($conditions);
@@ -202,7 +235,7 @@ class PlgSystemActionLogs extends JPlugin
 	 *
 	 * @return  void
 	 *
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 */
 	private function clearCacheGroups(array $clearGroups, array $cacheClients = array(0, 1))
 	{

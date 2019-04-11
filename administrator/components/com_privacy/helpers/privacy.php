@@ -12,7 +12,7 @@ defined('_JEXEC') or die;
 /**
  * Privacy component helper.
  *
- * @since  __DEPLOY_VERSION__
+ * @since  3.9.0
  */
 class PrivacyHelper extends JHelperContent
 {
@@ -23,13 +23,19 @@ class PrivacyHelper extends JHelperContent
 	 *
 	 * @return  void
 	 *
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 */
 	public static function addSubmenu($vName)
 	{
 		JHtmlSidebar::addEntry(
+			JText::_('COM_PRIVACY_SUBMENU_DASHBOARD'),
+			'index.php?option=com_privacy&view=dashboard',
+			$vName === 'dashboard'
+		);
+
+		JHtmlSidebar::addEntry(
 			JText::_('COM_PRIVACY_SUBMENU_REQUESTS'),
-			'index.php?option=com_privacy',
+			'index.php?option=com_privacy&view=requests',
 			$vName === 'requests'
 		);
 
@@ -53,11 +59,11 @@ class PrivacyHelper extends JHelperContent
 	 *
 	 * @return  string
 	 *
-	 * @since   __DEPLOY_VERSION__
+	 * @since   3.9.0
 	 */
 	public static function renderDataAsXml(array $exportData)
 	{
-		$export = new SimpleXMLElement("<data-export />");
+		$export = new SimpleXMLElement('<?xml version="1.0" encoding="utf-8"?><data-export />');
 
 		foreach ($exportData as $domain)
 		{

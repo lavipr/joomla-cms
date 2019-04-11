@@ -9,10 +9,11 @@
 
 defined('_JEXEC') or die;
 
-/** @var PrivacyViewConfirm $this */
+/** @var PrivacyViewRequest $this */
 
 JHtml::_('behavior.keepalive');
 JHtml::_('behavior.formvalidator');
+JHtml::_('formbehavior.chosen', 'select');
 
 ?>
 <div class="request-form<?php echo $this->pageclass_sfx; ?>">
@@ -23,22 +24,28 @@ JHtml::_('behavior.formvalidator');
 			</h1>
 		</div>
 	<?php endif; ?>
-	<form action="<?php echo JRoute::_('index.php?option=com_privacy&task=request.submit'); ?>" method="post" class="form-validate form-horizontal well">
-		<?php foreach ($this->form->getFieldsets() as $fieldset) : ?>
-			<fieldset>
-				<p><?php echo JText::_($fieldset->label); ?></p>
-				<?php foreach ($this->form->getFieldset($fieldset->name) as $name => $field) : ?>
-					<?php echo $field->renderField(); ?>
-				<?php endforeach; ?>
-			</fieldset>
-		<?php endforeach; ?>
-		<div class="control-group">
-			<div class="controls">
-				<button type="submit" class="btn btn-primary validate">
-					<?php echo JText::_('JSUBMIT'); ?>
-				</button>
+	<?php if ($this->sendMailEnabled) : ?>
+		<form action="<?php echo JRoute::_('index.php?option=com_privacy&task=request.submit'); ?>" method="post" class="form-validate form-horizontal well">
+			<?php foreach ($this->form->getFieldsets() as $fieldset) : ?>
+				<fieldset>
+					<?php if (!empty($fieldset->label)) : ?>
+						<legend><?php echo JText::_($fieldset->label); ?></legend>
+					<?php endif; ?>
+					<?php echo $this->form->renderFieldset($fieldset->name); ?>
+				</fieldset>
+			<?php endforeach; ?>
+			<div class="control-group">
+				<div class="controls">
+					<button type="submit" class="btn btn-primary validate">
+						<?php echo JText::_('JSUBMIT'); ?>
+					</button>
+				</div>
 			</div>
+			<?php echo JHtml::_('form.token'); ?>
+		</form>
+	<?php else : ?>
+		<div class="alert alert-warning">
+			<p><?php echo JText::_('COM_PRIVACY_WARNING_CANNOT_CREATE_REQUEST_WHEN_SENDMAIL_DISABLED'); ?></p>
 		</div>
-		<?php echo JHtml::_('form.token'); ?>
-	</form>
+	<?php endif; ?>
 </div>
