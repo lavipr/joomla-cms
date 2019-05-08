@@ -15,6 +15,7 @@ use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Language\Associations;
 use Joomla\Component\Associations\Administrator\Helper\AssociationsHelper;
 use Joomla\Registry\Registry;
+use Joomla\CMS\Language\Text;
 
 /**
  * View class for automatic associations
@@ -74,8 +75,8 @@ class HtmlView extends BaseHtmlView
 
 		if (!Associations::isEnabled())
 		{
-			$link = \JRoute::_('index.php?option=com_plugins&task=plugin.edit&extension_id=' . AssociationsHelper::getLanguagefilterPluginId());
-			Factory::getApplication()->enqueueMessage(\JText::sprintf('COM_ASSOCIATIONS_ERROR_NO_ASSOC', $link), 'warning');
+			$link = Route::_('index.php?option=com_plugins&task=plugin.edit&extension_id=' . AssociationsHelper::getLanguagefilterPluginId());
+			Factory::getApplication()->enqueueMessage(Text::sprintf('COM_ASSOCIATIONS_ERROR_NO_ASSOC', $link), 'warning');
 		}
 		else
 		{
@@ -96,7 +97,7 @@ class HtmlView extends BaseHtmlView
 
 			if (is_null($type))
 			{
-				Factory::getApplication()->enqueueMessage(\JText::_('COM_ASSOCIATIONS_ERROR_NO_TYPE'), 'warning');
+				Factory::getApplication()->enqueueMessage(Text::_('COM_ASSOCIATIONS_ERROR_NO_TYPE'), 'warning');
 			}
 			else
 			{

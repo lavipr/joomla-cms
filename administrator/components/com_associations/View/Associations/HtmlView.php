@@ -260,6 +260,22 @@ class HtmlView extends BaseHtmlView
 
 			$childBar = $dropdown->getChildToolbar();
 
+				$link = (isset($this->typeName) && isset($this->extensionName))
+					? Route::_('index.php?option=com_associations&view=autoassoc&tmpl=component&layout=modal&id=' . '&itemtype=' . $this->extensionName . '.' . $this->typeName)
+					: '';
+
+				$childBar->popupButton('autoassoc')
+					->text('COM_ASSOCIATIONS_CREATE_ASSOCIATIONS_BUTTON')
+					->url($link)
+					->icon('icon-new')
+					->selector('autoassocModal')
+					->footer($this->loadTemplate('autoassoc_footer'))
+					->bodyHeight(70)
+					->modalWidth(80)
+					->iframeHeight(400)
+					->iframeWidth(800)
+					->listCheck(true);
+
 			$childBar->confirmButton('delete-assoc')
 				->text('COM_ASSOCIATIONS_PURGE')
 				->task('associations.purge')
@@ -269,7 +285,7 @@ class HtmlView extends BaseHtmlView
 
 			$toolbar->confirmButton('purge')
 				->text('COM_ASSOCIATIONS_PURGE_ALL')
-				->message(Text::plural('COM_ASSOCIATIONS_PURGE_ALL_CONFIRM_PROMPT', (Text::_($this->extensionName) . " > " .  Text::_($languageKey))))
+				->message(Text::plural('COM_ASSOCIATIONS_PURGE_ALL_CONFIRM_PROMPT', (Text::_((isset($this->typeName)??'')) . " > " .  Text::_(isset($languageKey)??''))))
 				->task('associations.purgeAll');
 
 				ToolbarHelper::custom('associations.clean', 'refresh', 'refresh', 'COM_ASSOCIATIONS_DELETE_ORPHANS', false, false);

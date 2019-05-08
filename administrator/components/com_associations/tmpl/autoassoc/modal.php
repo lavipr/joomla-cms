@@ -12,9 +12,7 @@ use Joomla\CMS\Factory;
 
 defined('_JEXEC') or die;
 
-HTMLHelper::_('jquery.framework');
 HTMLHelper::_('behavior.multiselect');
-HTMLHelper::_('script', 'com_associations/admin-autoassoc-modal.js', array('relative' => true));
 HTMLHelper::_('script', 'system/fields/modal-fields.min.js', array('version' => 'auto', 'relative' => true));
 
 $listOrder        = $this->escape($this->state->get('list.ordering'));
@@ -23,10 +21,8 @@ $canManageCheckin = Factory::getUser()->authorise('core.manage', 'com_checkin');
 $colSpan          = 4;
 $form			  = $this->get('form');
 ?>
-<button id="applyBtn" type="button" class="hidden" onclick="void(0);"></button>
-<button id="closeBtn" type="button" class="hidden" onclick="void(0);"></button>
 
-<div class="container-popup">
+<div class="container-popup" id="autoassocModal">
 	<form action="<?php echo JRoute::_('index.php?option=com_associations&view=autoassoc&layout=modal&id=' . $this->state->get('itemId')
 		. '&itemtype=' . $this->state->get('itemtype')
 	); ?>" method="post" name="adminForm" id="adminForm">

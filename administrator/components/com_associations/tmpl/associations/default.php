@@ -17,6 +17,7 @@ use Joomla\CMS\Router\Route;
 use Joomla\Component\Associations\Administrator\Helper\AssociationsHelper;
 
 HTMLHelper::_('behavior.multiselect');
+HTMLHelper::_('script', 'com_associations/admin-associations-default-autoassoc.min.js', ['relative' => true, 'version' => 'auto']);
 
 $listOrder        = $this->escape($this->state->get('list.ordering'));
 $listDirn         = $this->escape($this->state->get('list.direction'));
@@ -129,36 +130,6 @@ HTMLHelper::_('script', 'com_associations/admin-associations-default.min.js', ['
 								</td>
 								<td>
 									<?php echo AssociationsHelper::getAssociationHtmlList($this->extensionName, $this->typeName, (int) $item->id, $item->language, !$isCheckout, false); ?>
-									<?php $modalId = 'associationsCreateAssociations' . $item->id; ?>
-									<?php if ($canCreate): ?>
-										<a href="#<?php echo $modalId; ?>"
-										   title="<?php echo JText::_("COM_ASSOCIATIONS_CREATE_ASSOCIATIONS_BUTTON"); ?>"
-										   class="badge badge-primary" data-toggle="modal">
-											<?php echo JText::_("COM_ASSOCIATIONS_CREATE_ASSOCIATIONS_BUTTON"); ?>
-										</a>
-										<?php $link = JRoute::_('index.php?option=com_associations&view=autoassoc&tmpl=component&layout=modal&id='
-											. $item->id . '&itemtype=' . $this->extensionName . '.' . $this->typeName
-										); ?>
-										<?php echo HTMLHelper::_(
-											'bootstrap.renderModal',
-											$modalId,
-											array(
-												'title'       => Text::_("COM_ASSOCIATIONS_CREATE_ASSOCIATIONS_MODAL"),
-												'url'         => $link,
-												'height'      => '400px',
-												'width'       => '800px',
-												'bodyHeight'  => 70,
-												'modalWidth'  => 80,
-												'footer'      => '<a type="button" class="btn btn-secondary" data-dismiss="modal" aria-hidden="true"'
-													. ' onclick="Joomla.iframeButtonClick({iframeSelector: \'#' . $modalId . 'Modal\',  buttonSelector: \'#closeBtn\'})">'
-													. Text::_('JLIB_HTML_BEHAVIOR_CLOSE') . '</a>'
-													. '<button type="button" class="btn btn-success" aria-hidden="true"'
-													. ' onclick="Joomla.iframeButtonClick({iframeSelector: \'#' . $modalId . 'Modal\',  buttonSelector: \'#applyBtn\'})">'
-													. 'Create</button>',
-											)
-										);
-										?>
-									<?php endif; ?>
 								</td>
 
 								<?php if (!empty($this->typeFields['menutype'])) : ?>
